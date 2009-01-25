@@ -1,0 +1,553 @@
+[1mdiff --cc facebox.js[m
+[1mindex 932664f,9a3cda9..dc5ffca[m
+[1m--- a/facebox.js[m
+[1m+++ b/facebox.js[m
+[36m@@@ -1,9 -1,9 +1,11 @@@[m
+  /*[m
+   * Facebox (for jQuery)[m
+[31m-- * version: 1.2 (05/05/2008)[m
+[32m++ * version: 1.2 (03/13/2008)[m
+   * @requires jQuery v1.2 or later[m
+   *[m
+   * Examples at http://famspam.com/facebox/[m
+[32m++ * Code at http://github.com/defunkt/facebox[m
+[32m++ * List at http://groups.google.com/groups/facebox[m
+   *[m
+   * Licensed under the MIT:[m
+   *   http://www.opensource.org/licenses/mit-license.php[m
+[36m@@@ -29,186 -29,187 +31,180 @@@[m
+   *  You can also use it programmatically:[m
+   * [m
+   *    jQuery.facebox('some html')[m
+[31m-  *    jQuery.facebox('some html', 'my-groovy-style')[m
+   *[m
+[31m-- *  The above will open a facebox with "some html" as the content.[m
+[32m++ *  This will open a facebox with "some html" as the content.[m
+   *    [m
+[31m-- *    jQuery.facebox(function($) { [m
+[31m-- *      $.get('blah.html', function(data) { $.facebox(data) })[m
+[31m-- *    })[m
+[32m++ *    jQuery.facebox(function() { ajaxes })[m
+   *[m
+[31m-- *  The above will show a loading screen before the passed function is called,[m
+[31m-- *  allowing for a better ajaxy experience.[m
+[31m-- *[m
+[31m-  *  The facebox function can also display an ajax page, an image, or the contents of a div:[m
+[31m-  *  [m
+[31m-  *    jQuery.facebox({ ajax: 'remote.html' })[m
+[31m-  *    jQuery.facebox({ ajax: 'remote.html' }, 'my-groovy-style')[m
+[31m-  *    jQuery.facebox({ image: 'stairs.jpg' })[m
+[31m-  *    jQuery.facebox({ image: 'stairs.jpg' }, 'my-groovy-style')[m
+[31m-  *    jQuery.facebox({ div: '#box' })[m
+[31m-  *    jQuery.facebox({ div: '#box' }, 'my-groovy-style')[m
+[31m - *  The facebox function can also display an ajax page or image:[m
+[31m - *  [m
+[31m - *    jQuery.facebox({ ajax: 'remote.html' })[m
+[31m - *    jQuery.facebox({ image: 'dude.jpg' })[m
+[32m++ *  This will show a loading screen before the passed function is called,[m
+[32m++ *  allowing for a better ajax experience.[m
+   *[m
+   *  Want to close the facebox?  Trigger the 'close.facebox' document event:[m
+   *[m
+[31m-- *    jQuery(document).trigger('close.facebox')[m
+[31m-- *[m
+[31m-- *  Facebox also has a bunch of other hooks:[m
+[31m-- *[m
+[31m-- *    loading.facebox[m
+[31m-- *    beforeReveal.facebox[m
+[31m-- *    reveal.facebox (aliased as 'afterReveal.facebox')[m
+[31m-- *    init.facebox[m
+[31m-- *[m
+[31m-- *  Simply bind a function to any of these hooks:[m
+[31m-- *[m
+[31m-- *   $(document).bind('reveal.facebox', function() { ...stuff to do after the facebox and contents are revealed... })[m
+[32m++ *  jQuery(document).trigger('close.facebox')[m
+   *[m
+   */[m
+  (function($) {[m
+    $.facebox = function(data, klass) {[m
+[32m++    $.facebox.init()[m
+      $.facebox.loading()[m
+[32m++    $.isFunction(data) ? data.call() : $.facebox.reveal(data, klass)[m
+[32m++  }[m
+  [m
+[31m-     if (data.ajax) fillFaceboxFromAjax(data.ajax, klass)[m
+[31m-     else if (data.image) fillFaceboxFromImage(data.image, klass)[m
+[31m-     else if (data.div) fillFaceboxFromHref(data.div, klass)[m
+[31m-     else if ($.isFunction(data)) data.call($)[m
+[31m-     else $.facebox.reveal(data, klass)[m
+[31m -    if (data.ajax) fillFaceboxFromAjax(data.ajax)[m
+[31m -    else if (data.image) fillFaceboxFromImage(data.image)[m
+[31m -    else if (data.div) fillFaceboxFromHref(data.div)[m
+[31m -    else if ($.isFunction(data)) data.call($)[m
+[31m -    else $.facebox.reveal(data, klass)[m
+[32m++  $.facebox.settings = {[m
+[32m++    loading_image : '/facebox/loading.gif',[m
+[32m++    close_image   : '/facebox/closelabel.gif',[m
+[32m++    window_hash   : '#facebox',[m
+[32m++    image_types   : [ 'png', 'jpg', 'jpeg', 'gif' ],[m
+[32m++    facebox_html  : '\[m
+[32m++  <div id="facebox" style="display:none;"> \[m
+[32m++    <div class="popup"> \[m
+[32m++      <table> \[m
+[32m++        <tbody> \[m
+[32m++          <tr> \[m
+[32m++            <td class="tl"/><td class="b"/><td class="tr"/> \[m
+[32m++          </tr> \[m
+[32m++          <tr> \[m
+[32m++            <td class="b"/> \[m
+[32m++            <td class="body"> \[m
+[32m++              <div class="content"> \[m
+[32m++              </div> \[m
+[32m++              <div class="footer"> \[m
+[32m++                <a href="#" class="close"> \[m
+[32m++                  <img src="/facebox/closelabel.gif" title="close" class="close_image" /> \[m
+[32m++                </a> \[m
+[32m++              </div> \[m
+[32m++            </td> \[m
+[32m++            <td class="b"/> \[m
+[32m++          </tr> \[m
+[32m++          <tr> \[m
+[32m++            <td class="bl"/><td class="b"/><td class="br"/> \[m
+[32m++          </tr> \[m
+[32m++        </tbody> \[m
+[32m++      </table> \[m
+[32m++    </div> \[m
+[32m++  </div>'[m
+    }[m
+  [m
+[31m--  /*[m
+[31m--   * Public, $.facebox methods[m
+[31m--   */[m
+[32m++  // Opening the facebox adds #facebox to the url.  Clicking 'back' closes the facebox[m
+[32m++  // but keeps you on the page you were on.[m
+[32m++  function back_button_observer() {[m
+[32m++    if (window.location.hash != $.facebox.settings.window_hash) $(document).trigger('close.facebox')[m
+[32m++  }[m
+  [m
+[31m--  $.extend($.facebox, {[m
+[31m--    settings: {[m
+[31m--      opacity      : 0,[m
+[31m--      overlay      : true,[m
+[31m-       loadingImage : '/facebox/loading.gif',[m
+[31m-       closeImage   : '/facebox/closelabel.gif',[m
+[31m-       imageTypes   : [ 'png', 'jpg', 'jpeg', 'gif' ],[m
+[31m-       faceboxHtml  : '\[m
+[31m-     <div id="facebox" style="display:none;"> \[m
+[31m-       <div class="popup"> \[m
+[31m-         <table> \[m
+[31m-           <tbody> \[m
+[31m-             <tr> \[m
+[31m-               <td class="tl"/><td class="b"/><td class="tr"/> \[m
+[31m-             </tr> \[m
+[31m-             <tr> \[m
+[31m-               <td class="b"/> \[m
+[31m-               <td class="body"> \[m
+[31m-                 <div class="content"> \[m
+[31m-                 </div> \[m
+[31m-                 <div class="footer"> \[m
+[31m-                   <a href="#" class="close"> \[m
+[31m-                     <img src="/facebox/closelabel.gif" title="close" class="close_image" /> \[m
+[31m-                   </a> \[m
+[31m-                 </div> \[m
+[31m-               </td> \[m
+[31m-               <td class="b"/> \[m
+[31m-             </tr> \[m
+[31m-             <tr> \[m
+[31m-               <td class="bl"/><td class="b"/><td class="br"/> \[m
+[31m-             </tr> \[m
+[31m-           </tbody> \[m
+[31m-         </table> \[m
+[31m-       </div> \[m
+[31m-     </div>'[m
+[31m-     },[m
+[31m -      footer       : true,[m
+[31m -      loadingImage : '/facebox/loading.gif',[m
+[31m -      closeImage   : '/facebox/closelabel.gif',[m
+[31m -      imageTypes   : [ 'png', 'jpg', 'jpeg', 'gif' ],[m
+[31m -      faceboxHtml  : '\[m
+[31m -    <div id="facebox" style="display:none;"> \[m
+[31m -      <div class="popup"> \[m
+[31m -        <table> \[m
+[31m -          <tbody> \[m
+[31m -            <tr> \[m
+[31m -              <td class="tl"/><td class="b"/><td class="tr"/> \[m
+[31m -            </tr> \[m
+[31m -            <tr> \[m
+[31m -              <td class="b"/> \[m
+[31m -              <td class="body"> \[m
+[31m -                <div class="content"> \[m
+[31m -                </div> \[m
+[31m -                <div class="footer"> \[m
+[31m -                  <a href="#" class="close"> \[m
+[31m -                    <img src="/facebox/closelabel.gif" title="close" class="close_image" /> \[m
+[31m -                  </a> \[m
+[31m -                </div> \[m
+[31m -              </td> \[m
+[31m -              <td class="b"/> \[m
+[31m -            </tr> \[m
+[31m -            <tr> \[m
+[31m -              <td class="bl"/><td class="b"/><td class="br"/> \[m
+[31m -            </tr> \[m
+[31m -          </tbody> \[m
+[31m -        </table> \[m
+[31m -      </div> \[m
+[31m -    </div>'[m
+[31m -    },[m
+[32m++  function observe_back_button() {[m
+[32m++    $.facebox.settings.old_hash = window.location.hash || '#'[m
+[32m++    window.location.hash = $.facebox.settings.window_hash[m
+[32m++    $.facebox.settings.back_button_observer = setInterval(back_button_observer, 200)[m
+[32m++  }[m
+  [m
+[31m--    loading: function() {[m
+[31m--      init()[m
+[31m--      if ($('#facebox .loading').length == 1) return true[m
+[31m--      showOverlay()[m
+[32m++  function stop_observing_back_button() {[m
+[32m++    if (window.location.hash != $.facebox.settings.old_hash) window.location.hash = $.facebox.settings.old_hash[m
+[32m++    $.facebox.settings.old_hash = null[m
+[32m++    clearInterval($.facebox.settings.back_button_observer)[m
+[32m++  }[m
+  [m
+[31m--      $('#facebox .content').empty()[m
+[31m--      $('#facebox .body').children().hide().end().[m
+[31m--        append('<div class="loading"><img src="'+$.facebox.settings.loadingImage+'"/></div>')[m
+[32m++  $.facebox.loading = function() {[m
+[32m++    if ($('#facebox .loading').length == 1) return true[m
+[32m++    [m
+[32m++    observe_back_button()[m
+  [m
+[31m--      $('#facebox').css({[m
+[31m--        top:	getPageScroll()[1] + (getPageHeight() / 10),[m
+[31m--        left:	$(window).width() / 2 - 205 [m
+[31m--      }).show()[m
+[32m++    $('#facebox .content').empty()[m
+[32m++    $('#facebox .body').children().hide().end().[m
+[32m++      append('<div class="loading"><img src="'+$.facebox.settings.loading_image+'"/></div>')[m
+  [m
+[31m--      $(document).bind('keydown.facebox', function(e) {[m
+[31m--        if (e.keyCode == 27) $.facebox.close()[m
+[31m--        return true[m
+[31m--      })[m
+[31m--      $(document).trigger('loading.facebox')[m
+[31m--    },[m
+[32m++    var pageScroll = $.facebox.getPageScroll()[m
+[32m++    $('#facebox').css({[m
+[32m++      top:	pageScroll[1] + ($.facebox.getPageHeight() / 10),[m
+[32m++      left:	pageScroll[0][m
+[32m++    }).show()[m
+  [m
+[31m--    reveal: function(data, klass) {[m
+[31m--      $(document).trigger('beforeReveal.facebox')[m
+[31m--      if (klass) $('#facebox .content').addClass(klass)[m
+[31m--      $('#facebox .content').append(data)[m
+[31m--      $('#facebox .loading').remove()[m
+[31m--      $('#facebox .body').children().fadeIn('normal')[m
+[31m--      $('#facebox').css('left', $(window).width() / 2 - ($('#facebox table').width() / 2))[m
+[31m--      $(document).trigger('reveal.facebox').trigger('afterReveal.facebox')[m
+[31m--    },[m
+[32m++    $(document).bind('keydown.facebox', function(e) {[m
+[32m++      if (e.keyCode == 27) $.facebox.close()[m
+[32m++    })[m
+[32m++    $('#facebox .close').click($.facebox.close)[m
+[32m++  }[m
+  [m
+[31m--    close: function() {[m
+[31m--      $(document).trigger('close.facebox')[m
+[31m--      return false[m
+[31m--    }[m
+[31m--  })[m
+[32m++  $.facebox.reveal = function(data, klass) {[m
+[32m++    if (klass) $('#facebox .content').addClass(klass)[m
+[32m++    $('#facebox .content').append(data)[m
+[32m++    $('#facebox .loading').remove()[m
+[32m++    $('#facebox .body').children().fadeIn('normal')[m
+[32m++  }[m
+[32m+ [m
+[31m -  /*[m
+[31m -   * Public, $.fn methods[m
+[31m -   */[m
+[32m++  $.facebox.close = function() {[m
+[32m++    $(document).trigger('close.facebox')[m
+[32m++    return false[m
+[32m++  }[m
+[32m +[m
+[31m-   /*[m
+[31m-    * Public, $.fn methods[m
+[31m-    */[m
+[32m++  $(document).bind('close.facebox', function() {[m
+[32m++    stop_observing_back_button()[m
+[32m++    $(document).unbind('keydown.facebox')[m
+[32m++    $('#facebox').fadeOut(function() {[m
+[32m++      $('#facebox .content').empty().removeClass().addClass('content')[m
+[32m++    })[m
+[32m++  })[m
+  [m
+    $.fn.facebox = function(settings) {[m
+[31m--    init(settings)[m
+[32m++    $.facebox.init(settings)[m
+[32m++[m
+[32m++    var image_types = $.facebox.settings.image_types.join('|')[m
+[32m++    image_types = new RegExp('\.' + image_types + '$', 'i')[m
+  [m
+[31m--    function clickHandler() {[m
+[32m++    function click_handler() {[m
+        $.facebox.loading(true)[m
+  [m
+[31m--      // support for rel="facebox.inline_popup" syntax, to add a class[m
+[31m--      // also supports deprecated "facebox[.inline_popup]" syntax[m
+[31m--      var klass = this.rel.match(/facebox\[?\.(\w+)\]?/)[m
+[32m++      // support for rel="facebox[.inline_popup]" syntax, to add a class[m
+[32m++      var klass = this.rel.match(/facebox\[\.(\w+)\]/)[m
+        if (klass) klass = klass[1][m
+  [m
+[31m--      fillFaceboxFromHref(this.href, klass)[m
+[32m++      // div[m
+[32m++      if (this.href.match(/#/)) {[m
+[32m++        var url    = window.location.href.split('#')[0][m
+[32m++        var target = this.href.replace(url,'')[m
+[32m++        $.facebox.reveal($(target).clone().show(), klass)[m
+[32m++[m
+[32m++      // image[m
+[32m++      } else if (this.href.match(image_types)) {[m
+[32m++        var image = new Image()[m
+[32m++        image.onload = function() {[m
+[32m++          $.facebox.reveal('<div class="image"><img src="' + image.src + '" /></div>', klass)[m
+[32m++        }[m
+[32m++        image.src = this.href[m
+[32m++[m
+[32m++      // ajax[m
+[32m++      } else {[m
+[32m++        $.get(this.href, function(data) { $.facebox.reveal(data, klass) })[m
+[32m++      }[m
+[32m++[m
+        return false[m
+      }[m
+  [m
+[31m-     return this.bind('click.facebox', clickHandler)[m
+[31m -    return this.click(clickHandler)[m
+[32m++    return this.click(click_handler)[m
+    }[m
+  [m
+[31m--  /*[m
+[31m--   * Private methods[m
+[31m--   */[m
+[31m--[m
+[31m--  // called one time to setup facebox on this page[m
+[31m--  function init(settings) {[m
+[32m++  $.facebox.init = function(settings) {[m
+      if ($.facebox.settings.inited) return true[m
+      else $.facebox.settings.inited = true[m
+  [m
+[31m--    $(document).trigger('init.facebox')[m
+[31m--    makeCompatible()[m
+[31m--[m
+[31m--    var imageTypes = $.facebox.settings.imageTypes.join('|')[m
+[31m-     $.facebox.settings.imageTypesRegexp = new RegExp('\.(' + imageTypes + ')$', 'i')[m
+[31m- [m
+[31m -    $.facebox.settings.imageTypesRegexp = new RegExp('\.' + imageTypes + '$', 'i')[m
+[31m -[m
+      if (settings) $.extend($.facebox.settings, settings)[m
+[31m--    $('body').append($.facebox.settings.faceboxHtml)[m
+[32m++    $('body').append($.facebox.settings.facebox_html)[m
+  [m
+      var preload = [ new Image(), new Image() ][m
+[31m--    preload[0].src = $.facebox.settings.closeImage[m
+[31m--    preload[1].src = $.facebox.settings.loadingImage[m
+[32m++    preload[0].src = $.facebox.settings.close_image[m
+[32m++    preload[1].src = $.facebox.settings.loading_image[m
+  [m
+      $('#facebox').find('.b:first, .bl, .br, .tl, .tr').each(function() {[m
+        preload.push(new Image())[m
+        preload.slice(-1).src = $(this).css('background-image').replace(/url\((.+)\)/, '$1')[m
+      })[m
+[31m -    [m
+[31m -    $('#facebox .close').click($.facebox.close);[m
+[31m -    [m
+[31m -    if($.facebox.settings.footer){[m
+[31m -      $('#facebox .close_image').attr('src', $.facebox.settings.closeImage);[m
+[31m -    }else{[m
+[31m -      $('#facebox .footer').remove();[m
+[31m -    }[m
+[32m +[m
+[32m +    $('#facebox .close').click($.facebox.close)[m
+[31m-     $('#facebox .close_image').attr('src', $.facebox.settings.closeImage)[m
+[32m++    $('#facebox .close_image').attr('src', $.facebox.settings.close_image)[m
+    }[m
+[31m--  [m
+[32m++[m
+    // getPageScroll() by quirksmode.com[m
+[31m--  function getPageScroll() {[m
+[32m++  $.facebox.getPageScroll = function() {[m
+      var xScroll, yScroll;[m
+      if (self.pageYOffset) {[m
+        yScroll = self.pageYOffset;[m
+[36m@@@ -223,8 -224,8 +219,8 @@@[m
+      return new Array(xScroll,yScroll) [m
+    }[m
+  [m
+[31m--  // Adapted from getPageSize() by quirksmode.com[m
+[31m--  function getPageHeight() {[m
+[32m++  // adapter from getPageSize() by quirksmode.com[m
+[32m++  $.facebox.getPageHeight = function() {[m
+      var windowHeight[m
+      if (self.innerHeight) {	// all except Explorer[m
+        windowHeight = self.innerHeight;[m
+[36m@@@ -235,91 -236,90 +231,4 @@@[m
+      }	[m
+      return windowHeight[m
+    }[m
+[31m--[m
+[31m--  // Backwards compatibility[m
+[31m--  function makeCompatible() {[m
+[31m--    var $s = $.facebox.settings[m
+[31m--[m
+[31m--    $s.loadingImage = $s.loading_image || $s.loadingImage[m
+[31m--    $s.closeImage = $s.close_image || $s.closeImage[m
+[31m--    $s.imageTypes = $s.image_types || $s.imageTypes[m
+[31m--    $s.faceboxHtml = $s.facebox_html || $s.faceboxHtml[m
+[31m--  }[m
+[31m--[m
+[31m--  // Figures out what you want to display and displays it[m
+[31m--  // formats are:[m
+[31m--  //     div: #id[m
+[31m--  //   image: blah.extension[m
+[31m--  //    ajax: anything else[m
+[31m--  function fillFaceboxFromHref(href, klass) {[m
+[31m--    // div[m
+[31m--    if (href.match(/#/)) {[m
+[31m--      var url    = window.location.href.split('#')[0][m
+[31m--      var target = href.replace(url,'')[m
+[31m-       $.facebox.reveal($(target).show().replaceWith("<div id='facebox_moved'></div>"), klass)[m
+[31m- [m
+[31m-     // image[m
+[31m-     } else if (href.match($.facebox.settings.imageTypesRegexp)) {[m
+[31m-       fillFaceboxFromImage(href, klass)[m
+[31m-     // ajax[m
+[31m-     } else {[m
+[31m-       fillFaceboxFromAjax(href, klass)[m
+[31m-     }[m
+[31m-   }[m
+[31m- [m
+[31m-   function fillFaceboxFromImage(href, klass) {[m
+[31m-     var image = new Image()[m
+[31m-     image.onload = function() {[m
+[31m-       $.facebox.reveal('<div class="image"><img src="' + image.src + '" /></div>', klass)[m
+[31m-     }[m
+[31m-     image.src = href[m
+[31m-   }[m
+[31m- [m
+[31m-   function fillFaceboxFromAjax(href, klass) {[m
+[31m-     $.get(href, function(data) { $.facebox.reveal(data, klass) })[m
+[31m-   }[m
+[31m- [m
+[31m-   function skipOverlay() {[m
+[31m-     return $.facebox.settings.overlay == false || $.facebox.settings.opacity === null [m
+[31m-   }[m
+[31m- [m
+[31m-   function showOverlay() {[m
+[31m-     if (skipOverlay()) return[m
+[31m- [m
+[31m-     if ($('#facebox_overlay').length == 0) [m
+[31m-       $("body").append('<div id="facebox_overlay" class="facebox_hide"></div>')[m
+[31m- [m
+[31m-     $('#facebox_overlay').hide().addClass("facebox_overlayBG")[m
+[31m-       .css('opacity', $.facebox.settings.opacity)[m
+[31m-       .click(function() { $(document).trigger('close.facebox') })[m
+[31m-       .fadeIn(200)[m
+[31m-     return false[m
+[31m-   }[m
+[31m- [m
+[31m-   function hideOverlay() {[m
+[31m-     if (skipOverlay()) return[m
+[31m- [m
+[31m-     $('#facebox_overlay').fadeOut(200, function(){[m
+[31m-       $("#facebox_overlay").removeClass("facebox_overlayBG")[m
+[31m-       $("#facebox_overlay").addClass("facebox_hide") [m
+[31m-       $("#facebox_overlay").remove()[m
+[31m-     })[m
+[31m-     [m
+[31m-     return false[m
+[31m-   }[m
+[31m- [m
+[31m-   /*[m
+[31m-    * Bindings[m
+[31m-    */[m
+[31m- [m
+[31m-   $(document).bind('close.facebox', function() {[m
+[31m-     $(document).unbind('keydown.facebox')[m
+[31m-     $('#facebox').fadeOut(function() {[m
+[31m-       if ($('#facebox_moved').length == 0) $('#facebox .content').removeClass().addClass('content')[m
+[31m-       else $('#facebox_moved').replaceWith($('#facebox .content').children().hide())[m
+[31m-       hideOverlay()[m
+[31m-       $('#facebox .loading').remove()[m
+[31m-     })[m
+[31m-   })[m
+[31m- [m
+[31m -      $.facebox.reveal($(target).clone().show(), klass)[m
+[31m -[m
+[31m -    // image[m
+[31m -    } else if (href.match($.facebox.settings.imageTypesRegexp)) {[m
+[31m -      fillFaceboxFromImage(href, klass)[m
+[31m -    // ajax[m
+[31m -    } else {[m
+[31m -      fillFaceboxFromAjax(href, klass)[m
+[31m -    }[m
+[31m -  }[m
+[31m -[m
+[31m -  function fillFaceboxFromImage(href, klass) {[m
+[31m -    var image = new Image()[m
+[31m -    image.onload = function() {[m
+[31m -      $.facebox.reveal('<div class="image"><img src="' + image.src + '" /></div>', klass)[m
+[31m -    }[m
+[31m -    image.src = href[m
+[31m -  }[m
+[31m -[m
+[31m -  function fillFaceboxFromAjax(href, klass) {[m
+[31m -    $.get(href, function(data) { $.facebox.reveal(data, klass) })[m
+[31m -  }[m
+[31m -[m
+[31m -  function skipOverlay() {[m
+[31m -    return $.facebox.settings.overlay == false || $.facebox.settings.opacity === null [m
+[31m -  }[m
+[31m -[m
+[31m -  function showOverlay() {[m
+[31m -    if (skipOverlay()) return[m
+[31m -[m
+[31m -    if ($('facebox_overlay').length == 0) [m
+[31m -      $("body").append('<div id="facebox_overlay" class="facebox_hide"></div>')[m
+[31m -[m
+[31m -    $('#facebox_overlay').hide().addClass("facebox_overlayBG")[m
+[31m -      .css('opacity', $.facebox.settings.opacity)[m
+[31m -      .click(function() { $(document).trigger('close.facebox') })[m
+[31m -      .fadeIn(200)[m
+[31m -    return false[m
+[31m -  }[m
+[31m -[m
+[31m -  function hideOverlay() {[m
+[31m -    if (skipOverlay()) return[m
+[31m -[m
+[31m -    $('#facebox_overlay').fadeOut(200, function(){[m
+[31m -      $("#facebox_overlay").removeClass("facebox_overlayBG")[m
+[31m -      $("#facebox_overlay").addClass("facebox_hide") [m
+[31m -      $("#facebox_overlay").remove()[m
+[31m -    })[m
+[31m -    [m
+[31m -    return false[m
+[31m -  }[m
+[31m -[m
+[31m -  /*[m
+[31m -   * Bindings[m
+[31m -   */[m
+[31m -[m
+[31m -  $(document).bind('close.facebox', function() {[m
+[31m -    $(document).unbind('keydown.facebox')[m
+[31m -    $('#facebox').fadeOut(function() {[m
+[31m -      $('#facebox .content').removeClass().addClass('content')[m
+[31m -      hideOverlay()[m
+[31m -      $('#facebox .loading').remove()[m
+[31m -    })[m
+[31m -  })[m
+[31m -[m
+  })(jQuery);[m
